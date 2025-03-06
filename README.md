@@ -2,9 +2,9 @@
 
 ## First things first
 
-Threema is a trademark of https://threema.ch/ and this tool is not connected in any ways with this great messenger and company.:heart:
+Threema is a trademark of https://threema.ch/ and this tool is not connected in any ways with this great messenger and company.❤️
 
-:exclamation:I only used the word "Threema" to make clear, that this tool should only be used to view backups made with Threema.:exclamation:
+‼I only used the word "Threema" to make clear, that this tool should only be used to view backups made with Threema.‼
 
 I tried my best to code the project to work with backups back from 2018 but I will not garuantee that this will work.
 Especially the fact that I'm located in Germany and my backups contain German related syntax could cause problems with other regional settings on your phone.
