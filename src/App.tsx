@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, {useState } from 'react';
 import './App.css';
+
 
 interface iMessage {
   direction: string;
   timeStamp: string;
   message: string;
+  messageID?: string;
+  description?: string;
 }
 
 interface iImage {
@@ -12,12 +15,57 @@ name: string;
 data: File;
 }
 
+interface iAttachment{
+name: string;
+data: File;
+}
+
+// enum for the locale strings
+// Please check the blank spaces at the end of the strings. They are important for the correct splitting of the message
+enum localeStrings {
+  IMAGE = "Bild",
+  FILE = "Datei: ",
+  TIMEZONE_SHORT = "MEZ: ",
+  TIMEZONE_LONG = "MESZ: ",
+  SUBTITLE = "Untertitel",
+}
+
+
 function updateImagesMap(index: number, file: File, images: { [id: number]: iImage }, setImages: React.Dispatch<React.SetStateAction<{ [id: number]: iImage }>>) {
   setImages((prevImages: { [id: number]: iImage }) => ({
     ...prevImages,
-    [index]: { name: file.name, data: file }
+    [index]: { name: file.name, data: file,  }
   }));
 }
+
+function updateAttachmentMap(index: number, file: File, attachment: { [id: number]: iImage }, setAttachments: React.Dispatch<React.SetStateAction<{ [id: number]: iAttachment }>>) {
+  setAttachments((prevAttachments: { [id: number]: iImage }) => ({
+    ...prevAttachments,
+    [index]: { name: file.name, data: file,  }
+  }));
+}
+
+function renderMessage(message: String) {
+  message = message.trim();
+  if (message.length > 0) {
+    if (!message.includes(".vcf") || !message.includes(".pdf") || !message.includes(".jpg") || !message.includes(".jpeg")) {
+    return <div className='message'>{message}</div>;
+    }
+    else {
+      return "";
+    } 
+  }
+}
+
+function messageHasRenderableContent(message: iMessage){
+  if(message.message.length > 0){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
 
 function getDataUrlFromImageName(imageName: string, images: { [id: number]: iImage }) {
   if (Object.values(images).some(foundImage => foundImage.name.includes(imageName))) {
@@ -28,22 +76,35 @@ function getDataUrlFromImageName(imageName: string, images: { [id: number]: iIma
     }
   }
   else {  
-    console.log("Image not found: " + imageName);
   }
 }
+
+function getDataUrlFromAttachment(attachmentName: string, attachments: { [id: number]: iAttachment }) {
+  if (Object.values(attachments).some(foundAttachment => foundAttachment.name.includes(attachmentName))) {
+    const image = Object.values(attachments).find(attachment => attachment.name === attachmentName);
+    if (image) {
+      var dataUrl = URL.createObjectURL(image.data);
+      return dataUrl;
+    }
+  }
+  else {  
+  }
+}
+
 
 const App: React.FC = () => {
   const [chatFile, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string[]>([]);
   const [messages, setMessages] = useState<{ [id: number]: iMessage }>({});
   const [images, setImages] = useState<{ [id: number]: iImage }>({});
-  var showImages = false;
+  const [attachments, setAttachments] = useState<{ [id: number]: iAttachment }>({});
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       var selectedChatFile: File | null = null;
       const files = event.target.files;
-      var imageCount = 1;
+      var counter = 1;
+      
 
       //iterate over the files and seperate the chat file from the images and other files
       for (let i = 0; i < files.length; i++) {
@@ -55,11 +116,15 @@ const App: React.FC = () => {
         }
         else{
           if(file.name.includes(".jpg") || file.name.includes(".jpeg")){
-            updateImagesMap(imageCount, file, images, setImages);
-            showImages = true;
-            imageCount++;          
+            updateImagesMap(counter, file, images, setImages);
+            counter++;          
+          }
+          else {
+            updateAttachmentMap(counter, file, attachments, setAttachments);
+            counter++;          
           }
         } 
+        
       }
 
       //handling the chat file itself
@@ -80,16 +145,19 @@ const App: React.FC = () => {
           const lineTemp = line.replace(">>>", "");
           var message = "";
           var timeStamp = "";
+          var messageID = i;
+          var messageTokens = null;
+          var description = null;
+          
 
-         
-
-          //Github Copilot makes a shorter version out of this but it is hard to read
-          //Threema made some changes in the past related to the time stamps (MEZ, MESZ) -> Germany. This will be different in other countries
+          // Github Copilot makes a shorter version out of this but it is hard to read
+          // Threema made some changes in the past related to the time stamps (MEZ, MESZ) -> Germany. This will be different in other countries
+          // please check the ENUM localeStrings for the correct strings
             let separator = "";
-            if (lineTemp.includes("MEZ: ")) {
-            separator = "MEZ: ";
-            } else if (lineTemp.includes("MESZ: ")) {
-            separator = "MESZ: ";
+            if (lineTemp.includes(localeStrings.TIMEZONE_SHORT)) {
+            separator = localeStrings.TIMEZONE_SHORT;
+            } else if (lineTemp.includes(localeStrings.TIMEZONE_LONG)) {
+            separator = localeStrings.TIMEZONE_LONG;
             }
 
             if (separator) {
@@ -110,20 +178,29 @@ const App: React.FC = () => {
             } else {
               direction = newMessages[id - 1]?.direction || "";
             }
+
+            //attachment handling
+            if (message.includes(localeStrings.FILE)) {
+              messageTokens = message.split(localeStrings.FILE);
+              message = messageTokens[1].trim();
+              messageID = i;
+            }
           
             //image handling
             if (message.includes(".jpg") || message.includes(".jpeg")) {
-                message = message.replace("Bild (", "");
-                message = message.replace("Datei: ", "");
+                message = message.replace(localeStrings.IMAGE + " (", "");
+                message = message.replace(localeStrings.FILE, "");
                 message = message.replace(")", "");
-
+            }
+            if (message.includes(localeStrings.SUBTITLE))
+            {
+              
+              messageTokens = message.split(localeStrings.SUBTITLE);
+              message = messageTokens[0].trim();
+              description = messageTokens[1].trim();
             }
             
-            if (line === "") {
-              direction="invisible";
-            }
-
-            newMessages[id] = { direction, timeStamp, message };
+            newMessages[id] = { direction, timeStamp, message, messageID: messageID.toString(), description: description || undefined };
         }
         
         setMessages(newMessages);
@@ -139,19 +216,33 @@ const App: React.FC = () => {
       
       {chatFile && <p>Selected file: {chatFile.name}</p>}
       {fileContent.length > 0 && (
-        <div>
-          <h3>Selected Threema chat file:</h3>
-          
+        <div >
+          <h3>Selected Threema chat file:</h3> 
             {Object.values(messages).map((msg) => (
-              
-                <div className={msg.direction}>  
-                  <div className='timeStamp'>{msg.timeStamp} </div>
+              messageHasRenderableContent(msg) &&
+                <div className={msg.direction} key={msg.messageID}>
+                   
+                  <div className='timeStamp'>{msg.timeStamp}</div>
+                  
                     {msg.message.includes(".jpg") || msg.message.includes(".jpeg") ? (
                       <img className="chatImage" src={getDataUrlFromImageName(msg.message, images)} alt={msg.message} />
+                    ) : null
+                    }
+                    
+                    {msg.message.includes(".vcf") || msg.message.includes(".pdf") ? (
+                      <div className="mediaAttachment">
+                        <a className="attachmentLink" href={getDataUrlFromAttachment(msg.message, attachments)}>
+                          <img className="fileAttachment"></img>
+                        </a>
+                      </div>
                     ) : (
-                      <div className='message'>{msg.message}</div>
+                      null
                     )}
-                  </div>
+
+                    {renderMessage(msg.message)}
+                    <p className="description">{msg.description !== undefined ? msg.description: null}</p>
+
+                </div>
             ))}
           </div>
       )}
