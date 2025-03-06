@@ -4,7 +4,7 @@
 
 Threema is a trademark of https://threema.ch/ and this tool is not connected in any ways with this great messenger and company.❤️
 
-‼I only used the word "Threema" to make clear, that this tool should only be used to view backups made with Threema.‼
+:exclamation:I only used the word "Threema" to make clear, that this tool should only be used to view backups made with Threema.:exclamation:
 
 I tried my best to code the project to work with backups back from 2018 but I will not garuantee that this will work.
 Especially the fact that I'm located in Germany and my backups contain German related syntax could cause problems with other regional settings on your phone.
@@ -26,6 +26,6 @@ You can now open up a backup by selecting all files on the folder. The tool will
 
 ## Final notes
 
-Honestly I personally don't get:thinking: it why Threema offers a possibility to create a backup of a chat and then they use a such dumb format like txt to store the messages. Why not using a json :heart: as well instead of rough txt files :broken_heart:? 😕 Just my two cents.
+Honestly I personally don't get🤔 it why Threema offers a possibility to create a backup of a chat and then they use a such dumb format like txt to store the messages. Why not using a json as well instead of rough txt files? 😕 Just my two cents.
 
-And Threema:wave:: if you read this: please offer an professional way to export chats as well.:pray: This should not be that hard. So please give it a try, okay?:kissing_heart:
+And Threema:wave:: if you read this: please offer an professional way to export chats as well.:pray: This should not be that hard. So please give it a try, okay?😘
